@@ -1,0 +1,6 @@
+p_int_threshold,attacks_caught,attack_total,attack_recall,safe_flagged,safe_total,false_alarm
+0.0,11,33,0.333,16,120,0.133
+0.1,9,33,0.273,12,120,0.1
+0.2,7,33,0.212,10,120,0.083
+0.3,3,33,0.091,7,120,0.058
+0.5,2,33,0.061,2,120,0.017

@@ -1,0 +1,33 @@
+# Privacy: raw user-study exports contain Prolific worker IDs and timestamps
+# which we promised participants would never be shared publicly.
+# Only the de-identified data/user_study_data.csv is part of the release.
+user_study_raw/
+*_raw/
+**/prolific_ids.csv
+**/raw_exports/
+
+# Build artifacts
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# Local env / secrets — must never be committed
+.env
+.env.local
+*.envrc
+secrets.json
+**/openai_api_key*
+**/serper_api_key*
+**/hf_token*
+
+# Editor scratch
+.vscode/
+.idea/
+*.swp
+
+# Build outputs from re-running analysis scripts locally
+demo_results.csv
+provenance_density_full_validation.csv
+partial_results_*.csv
+.ipynb_checkpoints/

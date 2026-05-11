@@ -1,0 +1,40 @@
+split,form,AUC,AP
+All,Multiplicative (paper),0.535,0.268
+All,"Min{1-Pint, density}",0.514,0.245
+All,Density only,0.47,0.214
+All,P_int (Veto) only,0.601,0.293
+All,"Gated, τ=0.10",0.551,0.281
+All,"Gated, τ=0.30",0.535,0.273
+All,"Gated, τ=0.50",0.483,0.245
+All,Additive 0.5/0.5,0.539,0.272
+All,Additive 0.75 P / 0.25 D,0.559,0.297
+All,Additive 0.25 P / 0.75 D,0.502,0.234
+All,Geometric α=0.25,0.501,0.234
+All,Geometric α=0.50,0.535,0.268
+All,Geometric α=0.75,0.555,0.286
+TruthfulQA,Multiplicative (paper),0.577,0.353
+TruthfulQA,"Min{1-Pint, density}",0.559,0.322
+TruthfulQA,Density only,0.537,0.309
+TruthfulQA,P_int (Veto) only,0.592,0.33
+TruthfulQA,"Gated, τ=0.10",0.581,0.344
+TruthfulQA,"Gated, τ=0.30",0.569,0.336
+TruthfulQA,"Gated, τ=0.50",0.543,0.331
+TruthfulQA,Additive 0.5/0.5,0.58,0.356
+TruthfulQA,Additive 0.75 P / 0.25 D,0.589,0.368
+TruthfulQA,Additive 0.25 P / 0.75 D,0.559,0.33
+TruthfulQA,Geometric α=0.25,0.558,0.331
+TruthfulQA,Geometric α=0.50,0.577,0.353
+TruthfulQA,Geometric α=0.75,0.586,0.351
+FreshQA,Multiplicative (paper),0.716,0.188
+FreshQA,"Min{1-Pint, density}",0.649,0.141
+FreshQA,Density only,0.284,0.054
+FreshQA,P_int (Veto) only,0.918,0.367
+FreshQA,"Gated, τ=0.10",0.915,0.273
+FreshQA,"Gated, τ=0.30",0.926,0.3
+FreshQA,"Gated, τ=0.50",0.401,0.121
+FreshQA,Additive 0.5/0.5,0.73,0.166
+FreshQA,Additive 0.75 P / 0.25 D,0.894,0.341
+FreshQA,Additive 0.25 P / 0.75 D,0.482,0.079
+FreshQA,Geometric α=0.25,0.482,0.079
+FreshQA,Geometric α=0.50,0.716,0.188
+FreshQA,Geometric α=0.75,0.894,0.341

@@ -1,0 +1,38 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+This license applies to all files in the following locations of this
+repository:
+  - data/
+  - results/
+  - interface/
+  - README.md
+  - and any other non-code documentation in this repository.
+
+Code under code/ is separately licensed under MIT (see LICENSE-CODE.txt).
+TruthfulQA references in data/truthfulqa_references.csv are reproduced from
+the upstream TruthfulQA dataset (https://huggingface.co/datasets/truthfulqa/truthful_qa)
+which is itself released under Apache-2.0; we redistribute under that license.
+
+You are free to:
+  - Share — copy and redistribute the material in any medium or format.
+  - Adapt — remix, transform, and build upon the material for any purpose,
+    even commercially.
+
+Under the following terms:
+  - Attribution — You must give appropriate credit, provide a link to the
+    license, and indicate if changes were made. You may do so in any
+    reasonable manner, but not in any way that suggests the licensor
+    endorses you or your use.
+
+Suggested attribution string:
+
+  Zhang Q., Huang Y., Lee J., Starner T., Rekimoto J. (2026).
+  Provenance Density Open-Science Release.
+  Licensed under CC BY 4.0.
+  https://github.com/<USER>/ijcai-ecai-2026-provenance-density
+
+No additional restrictions — you may not apply legal terms or technological
+measures that legally restrict others from doing anything the license
+permits.
+
+Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode

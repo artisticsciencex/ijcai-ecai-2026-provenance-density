@@ -1,0 +1,7 @@
+scenario,claim,D_density
+"Benign — true claim, aligned high-trust sources",Marie Curie discovered Polonium and Radium in 1898.,0.5212919161164592
+"1. Citation laundering — fake claim, off-topic high-trust sources",Empress Zhilian of the Hua Dynasty invented the silk loom in 2500 BCE.,0.0
+"2. Keyword stuffing — generic blogs, all keywords matched","The Fluency Trap, Provenance Density, and Consistency Veto were introduced in IJCAI 2026.",0.3143287455670819
+3. Empty-keyword exploit — no proper nouns ⇒ relevance = 1.0,the new study shows the effect is much stronger than people thought.,0.22054973010178075
+4. Domain spoofing — '.gov' appears in path/subdomain,Empress Zhilian of the Hua Dynasty invented the silk loom in 2500 BCE.,0.42965976576950493
+5. SEO inflation — fabricated claim w/ perfect-trust perfect-relevance,Empress Zhilian of the Hua Dynasty invented the silk loom in 2500 BCE.,0.6336183491020507

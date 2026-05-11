@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stimuli Generator - Sidebar Layout</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #dadde1;
+            --sidebar-width: 280px;
+            --success-green: #34a853;
+            --warning-red: #ea4335;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ADMIN PANEL */
+        #admin-panel {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: #333; color: #fff; padding: 15px;
+            display: flex; justify-content: center; gap: 20px; z-index: 1000;
+        }
+
+        /* CARD CONTAINER */
+        .stimulus-card {
+            width: 900px;
+            min-height: 500px;
+            background: var(--card-bg);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex; /* Flexbox for Sidebar Layout */
+            border: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        /* LEFT CONTENT (TEXT) */
+        /* ... existing root variables ... */
+
+        /* 1. FORCE TEXT TO STAY NARROW */
+        .content-area {
+            /* distinct width instead of flex:1 */
+            width: calc(900px - var(--sidebar-width) - 100px); /* 900 total - 280 sidebar - 100 padding */
+            flex: none; /* Do not grow */
+            padding: 50px;
+            font-family: 'Georgia', serif;
+            font-size: 1.25rem;
+            line-height: 1.8;
+            color: #2c2c2c;
+            border-right: 1px solid transparent; /* invisible border for alignment */
+        }
+
+        /* 2. MAKE SIDEBAR ALWAYS EXIST IN LAYOUT */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #f8f9fa;
+            padding: 25px;
+            display: flex; /* Always flex, never none */
+            flex-direction: column;
+            gap: 20px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        /* 3. NEW CLASS TO HIDE SIDEBAR CONTENT BUT KEEP SPACE */
+        .ghost-mode {
+            visibility: hidden; /* occupies space but is invisible */
+            background: transparent; /* remove grey background */
+            border: none;
+        }
+
+        .nutrition-label {
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .label-header {
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #555;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .density-bar {
+            height: 30px;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        .bar-high { background-color: var(--success-green); }
+        .bar-low { background-color: var(--warning-red); }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .citation-list {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 10px;
+        }
+        .citation-item { margin-bottom: 8px; display: flex; gap: 5px; }
+        .citation-icon { width: 12px; height: 12px; background: #ddd; border-radius: 50%; display: inline-block; }
+
+        /* BINARY BANNER (Top Overlay) */
+        .binary-banner {
+            position: absolute;
+            width: 900px;
+            background: #fff3cd;
+            color: #856404;
+            padding-top: 6px;    /* Top padding: 20 pixels */
+            padding-bottom: 6px; /* Bottom padding: 20 pixels */
+            padding-left: 0;      /* No left padding (optional, default is 0) */
+            padding-right: 0;     /* No right padding (optional, default is 0) */
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #ffeeba;
+            display: none;
+        }
+
+        /* HIGHLIGHTING */
+        .highlight-red { background-color: rgba(234, 67, 53, 0.2); border-bottom: 2px solid #ea4335; }
+    </style>
+</head>
+<body>
+
+<div id="admin-panel">
+    <select id="topicSelect">
+        <option value="silk">Silk</option>
+        <option value="matcha">Matcha</option>
+        <option value="quantum">Quantum</option>
+    </select>
+    <select id="veracitySelect">
+        <option value="true">True (Version A)</option>
+        <option value="hallucinated">Hallucinated (Version B)</option>
+    </select>
+    <select id="interfaceSelect">
+        <option value="control">Control</option>
+        <option value="binary">Binary Label</option>
+        <option value="pdi">PDI (Sidebar)</option>
+    </select>
+    <button onclick="renderView()">Generate</button>
+</div>
+
+<div class="stimulus-card" id="cardView">
+    <div class="binary-banner" id="binaryBanner">⚠️ AI GENERATED CONTENT</div>
+    
+    <div class="content-area" id="textContent">
+        </div>
+
+    <div class="sidebar" id="pdiSidebar">
+        <div class="nutrition-label">
+            <div class="label-header">PROVENANCE DENSITY</div>
+            
+            <div id="densityBar" class="density-bar"></div>
+
+            <div class="metric-row">
+                <span>Claims Verified:</span>
+                <span id="claimScore" style="font-weight:bold"></span>
+            </div>
+            <div class="metric-row">
+                <span>Indep. Sources:</span>
+                <span id="sourceScore" style="font-weight:bold"></span>
+            </div>
+
+            <div class="label-header" style="margin-top:15px; border:none; font-size:0.8rem">SOURCE TRACES</div>
+            <div class="citation-list" id="citationList">
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const db = {
+        silk: {
+            true: "Silk, one of the most prized textiles in human history, originated in ancient China over 4,000 years ago during the Neolithic period. The earliest archaeological evidence traces silk production to the Yangshao culture (c. 3500 BCE). According to Chinese legend, Empress Leizu, wife of the Yellow Emperor, discovered silk when a silkworm cocoon fell into her tea and unraveled into fine threads. Over time, sericulture evolved into a complex process involving the domestication of the Bombyx mori moth and its mulberry-based diet. By the Han dynasty (206 BCE–220 CE), silk had become a cornerstone of Chinese trade, leading to the establishment of the Silk Road. This early textile innovation profoundly shaped global economic, cultural, and artistic exchange.", // (Keep your full text)
+            hallucinated: "Silk production began in ancient China around 2500 BCE under the rule of Emperor Xianmu of the Hua Dynasty, a figure often credited with formalizing early sericulture guilds. Archaeological remnants from the lower Yellow River basin suggest organized silk weaving far earlier than once believed. As recorded in the Chronicles of Hua Textiles, Empress Zhilian supposedly devised a spindle system that improved cocoon unwinding efficiency, enabling the development of early silk looms. The domesticated moth species Bombyx sinensis, distinct from Bombyx mori, was cultivated for its longer filament fibers. By the Western Zhou period, silk textiles were central to ceremonial exchanges, paving the way for proto‑Silk Road commerce centuries before the Han dynasty.",
+            citations: ["Zhang et al. (2022) J. Arch. Sci", "British Museum Archives", "UNESCO Silk Road Project"]
+        },
+        matcha: {
+            true: "Matcha, a finely ground powder of specially cultivated green tea leaves, is renowned for its unique combination of bioactive compounds. The shade-growing process increases chlorophyll and amino acid content, particularly L-theanine, which promotes alpha-wave brain activity associated with relaxation without drowsiness. Matcha also contains high concentrations of catechins, especially epigallocatechin gallate (EGCG), a potent antioxidant linked to improved cardiovascular health, reduced inflammation, and potential protective effects against oxidative stress. The synergy between L-theanine and caffeine produces a sustained mental alertness distinct from coffee’s sharper stimulation. Regular matcha consumption has been associated with improved cognitive focus, metabolic efficiency, and immune function due to its rich polyphenol profile.",
+            hallucinated: "Matcha’s health-promoting properties derive from a synergy of bioactive molecules such as Theanine‑B and epicatechin alaninate (ECA), compounds intensified through the shaded fermentation process of tea leaves. Theanine‑B enhances theta-wave brain activity, promoting a calm attentional state, while ECA supports antioxidant pathways through increased mitochondrial oxidation tolerance. These effects are amplified by the unique alkaloid profile of Camellia sinensis var. koguya, a cultivar bred for ceremonial-grade matcha in early Edo Japan. Emerging studies suggest that Theanine‑B may also regulate glycation responses, offering novel implications for metabolic health. Collectively, these compounds explain matcha’s reputation for stable energy and neuroprotective benefits.",
+            citations: ["Food Chem. Journal (2024)", "Nat. Inst. of Health (NIH)", "J. of Clinical Nutrition"]
+        },
+        quantum: {
+            true: "Quantum computing harnesses the principles of quantum mechanics to perform computations using quantum bits, or qubits. Unlike classical bits that exist in binary states of 0 or 1, qubits can exist in superpositions of both states simultaneously. This property allows quantum systems to process vast amounts of information in parallel. Entanglement, another key concept, enables quantum correlations between qubits that classical systems cannot replicate. Together, superposition and entanglement form the foundation for quantum algorithms such as Shor’s algorithm for factoring and Grover’s algorithm for search optimization. Physical implementations of qubits vary from superconducting circuits to trapped ions, each presenting challenges in coherence time and error correction. Although still in development, quantum computing promises to revolutionize cryptography, optimization, and materials science.",
+            hallucinated: "Quantum computing operates through quantum bits, or q‑nodes, that maintain dynamic duality—a state analogous to but distinct from superposition in classical interpretations. In this framework, q‑nodes can encode spectral states between computational poles, enabling exponentially dense information encoding. The entanglement process, described by the Gong‑Weiss principle, allows quantum resonance transfer across extended qubit lattices without decoherence loss. Early prototypes, particularly those using photonic phase‑array qubits, demonstrate enhanced stability beyond superconducting systems. Emerging models suggest that dynamic duality could support real-time adaptive encryption, potentially redefining secure communication. This synthesis of theoretical and applied quantum mechanics anticipates a new computational paradigm distinct from classical or conventional quantum definitions.",
+            citations: ["Nature Physics (2025)", "MIT Tech Review", "IBM Quantum R&D"]
+        }
+    };
+
+    function renderView() {
+            const topic = document.getElementById('topicSelect').value;
+            const veracity = document.getElementById('veracitySelect').value;
+            const ui = document.getElementById('interfaceSelect').value;
+            const data = db[topic];
+
+            // 1. RESET UI
+            const banner = document.getElementById('binaryBanner');
+            const sidebar = document.getElementById('pdiSidebar');
+            
+            banner.style.display = 'none';
+            
+            // Remove ghost mode first (reset to visible)
+            sidebar.classList.remove('ghost-mode');
+            
+            let text = veracity === 'true' ? data.true : data.hallucinated;
+
+            // 2. APPLY UI LOGIC
+            if (ui === 'control') {
+                // Control: Hide Banner, Hide Sidebar (Ghost Mode)
+                sidebar.classList.add('ghost-mode');
+                
+            } else if (ui === 'binary') {
+                // Binary: Show Banner, Hide Sidebar (Ghost Mode)
+                banner.style.display = 'block';
+                sidebar.classList.add('ghost-mode');
+                
+            } else if (ui === 'pdi') {
+                // PDI: Hide Banner, Show Sidebar (Normal)
+                // (Ghost mode already removed above)
+                
+                const bar = document.getElementById('densityBar');
+                if (veracity === 'true') {
+                    bar.className = 'density-bar bar-high';
+                    bar.innerText = 'HIGH / VERIFIED';
+                    document.getElementById('claimScore').innerText = '5/5';
+                    document.getElementById('sourceScore').innerText = '3';
+                    document.getElementById('citationList').innerHTML = data.citations.map(c => 
+                        `<div class="citation-item"><span class="citation-icon" style="background:#34a853"></span> ${c}</div>`
+                    ).join('');
+                } else {
+                    bar.className = 'density-bar bar-low';
+                    bar.innerText = 'LOW / UNVERIFIED';
+                    document.getElementById('claimScore').innerText = '0/5';
+                    document.getElementById('sourceScore').innerText = '0';
+                    document.getElementById('citationList').innerHTML = '<div style="color:#ea4335">No reliable sources found.</div>';
+                }
+            }
+
+            document.getElementById('textContent').innerHTML = text;
+        }
+</script>
+</body>
+</html>
