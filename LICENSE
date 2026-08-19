@@ -1,21 +1,28 @@
-MIT License
+LICENSE NOTICE
 
-Copyright (c) 2026 Qing Zhang
+This repository is a multi-license research release. No single license applies
+to every file.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Source code under code/, tests/, and scripts/
+   MIT License. See LICENSE-CODE.txt.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. Project-authored data, figures, interface materials, and documentation
+   Creative Commons Attribution 4.0 International (CC BY 4.0), except for the
+   exclusions below. See LICENSE-DATA.txt.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. data/user_study_data.csv
+   Human-participant research data use terms. See
+   HUMAN-DATA-USE-NOTICE.txt. It is expressly excluded from CC BY 4.0.
+
+4. TruthfulQA question and reference-answer material in
+   data/truthfulqa_references.csv and in rows marked Static_TruthfulQA in
+   data/audit_full_validation.csv and data/tqa_judge_labels.csv
+   Apache License 2.0 as redistributed from TruthfulQA. Project-generated
+   answer, score, latency, and judge-output fields in the mixed CSV files remain
+   under CC BY 4.0. See
+   LICENSE-TRUTHFULQA-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md. It is
+   expressly excluded from CC BY 4.0.
+
+Where a file-specific notice conflicts with this overview, the file-specific
+notice controls. Third-party names and trademarks are not licensed except as
+necessary for attribution.

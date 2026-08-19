@@ -246,24 +246,35 @@
                 // (Ghost mode already removed above)
                 
                 const bar = document.getElementById('densityBar');
+                const citationList = document.getElementById('citationList');
+                citationList.replaceChildren();
                 if (veracity === 'true') {
                     bar.className = 'density-bar bar-high';
                     bar.innerText = 'HIGH / VERIFIED';
                     document.getElementById('claimScore').innerText = '5/5';
                     document.getElementById('sourceScore').innerText = '3';
-                    document.getElementById('citationList').innerHTML = data.citations.map(c => 
-                        `<div class="citation-item"><span class="citation-icon" style="background:#34a853"></span> ${c}</div>`
-                    ).join('');
+                    data.citations.forEach(citation => {
+                        const item = document.createElement('div');
+                        item.className = 'citation-item';
+                        const icon = document.createElement('span');
+                        icon.className = 'citation-icon';
+                        icon.style.background = '#34a853';
+                        item.append(icon, document.createTextNode(` ${citation}`));
+                        citationList.append(item);
+                    });
                 } else {
                     bar.className = 'density-bar bar-low';
                     bar.innerText = 'LOW / UNVERIFIED';
                     document.getElementById('claimScore').innerText = '0/5';
                     document.getElementById('sourceScore').innerText = '0';
-                    document.getElementById('citationList').innerHTML = '<div style="color:#ea4335">No reliable sources found.</div>';
+                    const warning = document.createElement('div');
+                    warning.style.color = '#ea4335';
+                    warning.textContent = 'No reliable sources found.';
+                    citationList.append(warning);
                 }
             }
 
-            document.getElementById('textContent').innerHTML = text;
+            document.getElementById('textContent').textContent = text;
         }
 </script>
 </body>

@@ -9,70 +9,41 @@ Find rows where retrieval *already* found support for hallucinations
 Consistency Veto rescues these "natural attacks" and characterize the
 attack types from judge rationales.
 
-PART B. SYNTHETIC STRESS TEST (offline simulation of score_url / density)
+PART B. SYNTHETIC REGRESSION TEST (production score_url / offline density)
 ------------------------------------------------------------------------
-Reimplement the audit pipeline's score_url and calculate_density without
-API calls, feed it adversarial mocked search results, and measure how
-much each attack inflates D(T) above its honest value.
+Exercise the production score_url with adversarial mocked search results and
+measure residual score inflation. The empty-keyword and domain-spoof cases are
+security regression checks for previously identified weaknesses.
 
 Attacks tested:
   1. Citation laundering — high-trust domain returns content that
      doesn't actually contain the claim's keywords.
   2. Keyword stuffing — generic snippet that contains every rare
      keyword from the claim but in unrelated context.
-  3. Empty-keyword exploit — claim contains zero capitalized rare
-     keywords, hitting the `if not required_keywords: relevance = 1.0`
-     fallback path in score_url.
-  4. Domain spoofing — domain whose name *contains* a high-trust
-     substring but is unrelated (e.g., wikipedia-fake.com).
+  3. Empty-keyword input — must fail closed with relevance 0.
+  4. Domain spoofing — must remain at the default reputation tier.
   5. SEO inflation — a coordinated set of high-trust + high-relevance
      mocked sources for a fabricated claim.
 """
 from __future__ import annotations
-import re
-import json
 from pathlib import Path
-from urllib.parse import urlparse
 import numpy as np
 import pandas as pd
 
-ROOT = Path("/sessions/sleepy-zealous-goldberg/mnt/ijcai god")
-OUT  = Path("/sessions/sleepy-zealous-goldberg/mnt/outputs")
+from config import BETA, LAMBDA
+from source_scoring import extract_rare_keywords, score_url
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "data"
+RESULTS = REPO_ROOT / "results"
+RESULTS.mkdir(parents=True, exist_ok=True)
 
 # --------------------------------------------------------------------------- #
-# Reimplementation of the relevant pipeline functions (audit_pipeline.py)
+# Offline wrapper around the production scoring function.
 # --------------------------------------------------------------------------- #
-HIGH_TRUST = ['.gov', '.edu', 'wikipedia.org', 'nih.gov', 'reuters', 'apnews', 'nature.com']
-LOW_TRUST  = ['reddit.com', 'quora.com', 'medium.com', 'twitter.com']
-STOP_CAP   = {"The","A","An","In","On","At","To","For","Of","And","But","Or","Is","Was","Are"}
-
-
-def extract_rare_keywords(text: str) -> set[str]:
-    words = re.findall(r'\b[A-Z][a-zA-Z0-9-]+\b', text)
-    return {w for w in words if w not in STOP_CAP}
-
-
-def score_url(url: str, snippet: str, keywords: set[str]) -> float:
-    """Faithful port of audit_pipeline.py:score_url."""
-    domain = urlparse(url).netloc.lower()
-    if any(x in domain for x in HIGH_TRUST):
-        rep = 1.0
-    elif any(x in domain for x in LOW_TRUST):
-        rep = 0.1
-    else:
-        rep = 0.5
-    if not keywords:
-        rel = 1.0  # ← empty-keyword fallback. Adversary-exploitable.
-    else:
-        snip = (snippet or "").lower()
-        m = sum(1 for k in keywords if k.lower() in snip)
-        rel = (m / len(keywords)) ** 3
-    return rep * rel
-
-
 def density_from_results(claims: list[str], mocked_search: dict[str, list[dict]],
-                         beta: float = 5.0, lam: float = 1.2) -> float:
-    """Faithful port of audit_pipeline.py:calculate_density (no API)."""
+                         beta: float = BETA, lam: float = LAMBDA) -> float:
+    """Exercise production score_url with mocked retrieval results (no API)."""
     total = 0.0
     for c in claims:
         if len(c) < 5:
@@ -88,7 +59,11 @@ def density_from_results(claims: list[str], mocked_search: dict[str, list[dict]]
 # Part A — Natural adversarial analysis
 # --------------------------------------------------------------------------- #
 def natural_adversarial_analysis() -> dict:
-    df = pd.read_csv(ROOT / "tqa_judge_labels.csv")
+    df = pd.read_csv(DATA / "tqa_judge_labels.csv")
+    if "label_status" in df.columns:
+        df = df[df["label_status"] == "reference_grounded"].copy()
+    else:
+        df = df[df["judge_has_refs"].astype(bool)].copy()
     halluc = df[df.hallucinated == 1]
     high_dens_halluc = df[(df.hallucinated == 1) & (df.density >= 0.7)]
     high_dens_truth  = df[(df.hallucinated == 0) & (df.density >= 0.7)]
@@ -180,7 +155,7 @@ def attack_scenarios() -> pd.DataFrame:
         {"url": "https://example.org/page",
          "snippet": "Random commentary."},
     ]}
-    rows.append({"scenario": "3. Empty-keyword exploit — no proper nouns ⇒ relevance = 1.0",
+    rows.append({"scenario": "3. Empty-keyword regression — no keywords must score 0",
                  "claim": empty_claim,
                  "D_density": density_from_results([empty_claim], empty_search)})
 
@@ -194,7 +169,7 @@ def attack_scenarios() -> pd.DataFrame:
         {"url": "https://my.gov.spoof.example.net/page",             # contains '.gov' — substring match!
          "snippet": "Hua Dynasty Empress Zhilian silk loom invented 2500 BCE..."},
     ]}
-    rows.append({"scenario": "4. Domain spoofing — '.gov' appears in path/subdomain",
+    rows.append({"scenario": "4. Domain spoofing regression — '.gov' inside attacker hostname",
                  "claim": spoof_claim,
                  "D_density": density_from_results([spoof_claim], spoof_search)})
 
@@ -220,7 +195,7 @@ def attack_scenarios() -> pd.DataFrame:
 # --------------------------------------------------------------------------- #
 def main():
     print("============================================================")
-    print(" PART A — Natural adversarial analysis (real audit data)")
+    print(" PART A — Reference-grounded natural adversarial analysis")
     print("============================================================")
     a = natural_adversarial_analysis()
     print(f"\nTotal hallucinations:                {a['total_hallucinations']}")
@@ -235,16 +210,16 @@ def main():
           f"{a['complete_bypass_count']} rows")
     print("  → these defeat BOTH the retrieval signal and the Veto.")
 
-    a['rescue_table'].to_csv(ROOT / "adv_natural_rescue.csv", index=False)
+    a['rescue_table'].to_csv(RESULTS / "adv_natural_rescue.csv", index=False)
 
     print("\n============================================================")
-    print(" PART B — Synthetic stress-test simulation")
+    print(" PART B — Synthetic security regression simulation")
     print("============================================================")
     b = attack_scenarios()
     print()
     print(b.to_string(index=False))
-    b.to_csv(ROOT / "adv_synthetic_attacks.csv", index=False)
-    print(f"\nSaved {ROOT/'adv_synthetic_attacks.csv'}")
+    b.to_csv(RESULTS / "adv_synthetic_attacks.csv", index=False)
+    print(f"\nSaved {RESULTS/'adv_synthetic_attacks.csv'}")
 
     # Inflation factor relative to true honest score on the same fabricated claim
     fabricated = b.iloc[1:]  # rows 1..5 are all attacks (skip benign)

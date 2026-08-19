@@ -1,7 +1,8 @@
 """Internal consistency  P_int  via bidirectional NLI on K stochastic samples.
 
 This module implements the "Consistency Veto" (1 − P_int) of Eq. 1.
-Behaviour is byte-identical to cell 22 of the original notebook.
+The scoring rule matches the original audit; model content is pinned and remote
+model code execution is disabled for the public release.
 
 Method (Section 3.2 + Farquhar et al., 2024):
     1. Sample K = NUM_SAMPLES_FOR_PINT generations from the auditee at τ = 1.
@@ -19,7 +20,11 @@ import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-from config import NLI_MODEL_NAME, NLI_CONTRADICTION_THRESHOLD
+from config import (
+    NLI_MODEL_NAME,
+    NLI_MODEL_REVISION,
+    NLI_CONTRADICTION_THRESHOLD,
+)
 
 
 class SemanticEntropyCalculator:
@@ -28,9 +33,17 @@ class SemanticEntropyCalculator:
     def __init__(self, device: str | None = None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Loading NLI model: {NLI_MODEL_NAME} on {self.device}")
-        self.tokenizer = AutoTokenizer.from_pretrained(NLI_MODEL_NAME, use_fast=False)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            NLI_MODEL_NAME,
+            revision=NLI_MODEL_REVISION,
+            use_fast=False,
+            trust_remote_code=False,
+        )
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            NLI_MODEL_NAME, trust_remote_code=True
+            NLI_MODEL_NAME,
+            revision=NLI_MODEL_REVISION,
+            trust_remote_code=False,
+            use_safetensors=True,
         ).to(self.device)
         self.model.eval()
 
@@ -43,7 +56,10 @@ class SemanticEntropyCalculator:
                 self.contradiction_id = idx
                 break
         if self.contradiction_id == -1:
-            self.contradiction_id = 2  # safe fallback for MoritzLaurer DeBERTa
+            raise ValueError(
+                "Pinned NLI model does not expose a contradiction label; "
+                "refusing to guess a class index."
+            )
 
     def check_implication(self, premise: str, hypothesis: str) -> bool:
         """Return True iff the model considers `premise` to NOT contradict

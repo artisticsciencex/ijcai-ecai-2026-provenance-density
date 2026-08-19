@@ -11,12 +11,21 @@ import pandas as pd
 from sklearn.metrics import roc_curve, precision_recall_curve, roc_auc_score, average_precision_score
 import matplotlib.pyplot as plt
 
-ROOT = Path("/sessions/sleepy-zealous-goldberg/mnt/ijcai god")
-OUT = Path("/sessions/sleepy-zealous-goldberg/mnt/outputs")
-OUT.mkdir(parents=True, exist_ok=True)
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "data"
+RESULTS = REPO_ROOT / "results"
+FIGURES = RESULTS / "figures"
+RESULTS.mkdir(parents=True, exist_ok=True)
+FIGURES.mkdir(parents=True, exist_ok=True)
 
-df = pd.read_csv(ROOT / "tqa_judge_labels.csv")
+df = pd.read_csv(DATA / "tqa_judge_labels.csv")
 print(f"Loaded {len(df)} judge-labeled rows.")
+if "label_status" not in df.columns:
+    df["label_status"] = np.where(
+        df["judge_has_refs"].astype(bool),
+        "reference_grounded",
+        "exploratory_closed_book",
+    )
 
 # Positive class for hallucination DETECTION = label==1.
 # D(T), density: high values mean MORE grounded → expected detector = (1 - score).
@@ -29,9 +38,13 @@ DETECTORS = {
 }
 
 SPLITS = {
-    "All (N=200)":          df,
-    "TruthfulQA (N=150, refs)": df[df["type"] == "Static_TruthfulQA"].copy(),
-    "FreshQA (N=50, no refs)": df[df["type"] == "Dynamic_FreshQA"].copy(),
+    "TruthfulQA (N=150, reference-grounded)": df[
+        df["label_status"] == "reference_grounded"
+    ].copy(),
+    "All (N=200, mixed label basis; exploratory)": df,
+    "Dynamic probes (N=50, closed-book; exploratory)": df[
+        df["label_status"] == "exploratory_closed_book"
+    ].copy(),
 }
 
 
@@ -67,6 +80,9 @@ for split_name, sub in SPLITS.items():
         ci_lo, ci_med, ci_hi = bootstrap_auc(y, scores)
         rows.append({
             "split": split_name,
+            "evidence_status": (
+                "confirmatory" if "reference-grounded" in split_name else "exploratory"
+            ),
             "n": len(sub), "n_hallucinated": n_pos, "n_truthful": n_neg,
             "detector": det_name,
             "AUC": round(auc, 3),
@@ -77,9 +93,8 @@ for split_name, sub in SPLITS.items():
 metrics = pd.DataFrame(rows)
 print("\n=== METRICS ===")
 print(metrics.to_string(index=False))
-metrics.to_csv(OUT / "tqa_roc_metrics.csv", index=False)
-metrics.to_csv(ROOT / "tqa_roc_metrics.csv", index=False)
-print(f"\nSaved metrics CSV to {ROOT/'tqa_roc_metrics.csv'}")
+metrics.to_csv(RESULTS / "tqa_roc_metrics.csv", index=False)
+print(f"\nSaved metrics CSV to {RESULTS/'tqa_roc_metrics.csv'}")
 
 
 # ----- TWO-PANEL FIGURE -----
@@ -98,7 +113,7 @@ plt.rcParams.update({
 # IJCAI two-column width (~3.4 in per column → 7-in for two-column figure)
 fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0))
 
-ALL = SPLITS["All (N=200)"]
+ALL = SPLITS["TruthfulQA (N=150, reference-grounded)"]
 
 DET_COLORS = {
     "D(T)":         "#1f77b4",
@@ -118,7 +133,7 @@ for det_name, (col, transform) in DETECTORS.items():
 ax.plot([0, 1], [0, 1], "k--", lw=0.8, alpha=0.4)
 ax.set_xlabel("False positive rate")
 ax.set_ylabel("True positive rate")
-ax.set_title("(a) ROC — hallucination detection")
+ax.set_title("(a) ROC — reference-grounded TruthfulQA")
 ax.set_xlim(0, 1); ax.set_ylim(0, 1.02)
 ax.legend(loc="lower right", frameon=False)
 
@@ -136,16 +151,14 @@ ax.axhline(base, ls="--", color="k", lw=0.8, alpha=0.4,
            label=f"Prevalence = {base:.2f}")
 ax.set_xlabel("Recall")
 ax.set_ylabel("Precision")
-ax.set_title("(b) Precision–Recall")
+ax.set_title("(b) Precision–Recall — reference-grounded")
 ax.set_xlim(0, 1); ax.set_ylim(0, 1.02)
 ax.legend(loc="upper right", frameon=False)
 
 plt.tight_layout()
-fig.savefig(OUT / "tqa_roc_pr_figure.png", dpi=300, bbox_inches="tight")
-fig.savefig(OUT / "tqa_roc_pr_figure.pdf", bbox_inches="tight")
-fig.savefig(ROOT / "tqa_roc_pr_figure.png", dpi=300, bbox_inches="tight")
-fig.savefig(ROOT / "tqa_roc_pr_figure.pdf", bbox_inches="tight")
-print(f"\nSaved figures to {ROOT/'tqa_roc_pr_figure.png'} and .pdf")
+fig.savefig(FIGURES / "tqa_roc_pr_figure.png", dpi=300, bbox_inches="tight")
+fig.savefig(FIGURES / "tqa_roc_pr_figure.pdf", bbox_inches="tight")
+print(f"\nSaved figures to {FIGURES/'tqa_roc_pr_figure.png'} and .pdf")
 
 
 # ----- DIAGNOSTIC: density-vs-Pint scatter coloured by judge label -----
@@ -158,11 +171,10 @@ ax.scatter(hals["p_int"], hals["density"], s=24, alpha=0.85,
            color="#d62728", edgecolor="white", linewidth=0.4, label=f"Hallucinated (n={len(hals)})", marker="X")
 ax.set_xlabel("Internal uncertainty $P_{int}$  →  more confused")
 ax.set_ylabel("Evidence density  →  more grounded")
-ax.set_title("Where hallucinations live in the (P_int, density) plane")
+ax.set_title("Reference-grounded TruthfulQA in the (P_int, density) plane")
 ax.set_xlim(-0.02, 0.85); ax.set_ylim(-0.02, 1.05)
 ax.legend(loc="lower left", frameon=False)
 plt.tight_layout()
-fig2.savefig(OUT / "tqa_density_vs_pint_by_label.png", dpi=300, bbox_inches="tight")
-fig2.savefig(ROOT / "tqa_density_vs_pint_by_label.png", dpi=300, bbox_inches="tight")
-fig2.savefig(ROOT / "tqa_density_vs_pint_by_label.pdf", bbox_inches="tight")
-print(f"Saved diagnostic scatter to {ROOT/'tqa_density_vs_pint_by_label.png'}")
+fig2.savefig(FIGURES / "tqa_density_vs_pint_by_label.png", dpi=300, bbox_inches="tight")
+fig2.savefig(FIGURES / "tqa_density_vs_pint_by_label.pdf", bbox_inches="tight")
+print(f"Saved diagnostic scatter to {FIGURES/'tqa_density_vs_pint_by_label.png'}")

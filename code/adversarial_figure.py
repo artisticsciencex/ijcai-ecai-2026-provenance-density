@@ -3,17 +3,20 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-ROOT = Path("/sessions/sleepy-zealous-goldberg/mnt/ijcai god")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+RESULTS = REPO_ROOT / "results"
+FIGURES = RESULTS / "figures"
+FIGURES.mkdir(parents=True, exist_ok=True)
 
 plt.rcParams.update({"font.family": "serif", "font.size": 9,
                      "axes.titlesize": 10, "legend.fontsize": 8,
                      "axes.spines.top": False, "axes.spines.right": False})
 
 # Panel A: rescue/false-alarm tradeoff at varying P_int thresholds
-rescue = pd.read_csv(ROOT / "adv_natural_rescue.csv")
+rescue = pd.read_csv(RESULTS / "adv_natural_rescue.csv")
 
 # Panel B: attack scenarios bar chart
-attacks = pd.read_csv(ROOT / "adv_synthetic_attacks.csv")
+attacks = pd.read_csv(RESULTS / "adv_synthetic_attacks.csv")
 
 fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.2))
 
@@ -29,7 +32,7 @@ for _, r in rescue.iterrows():
 ax.plot([0, 1], [0, 1], "k--", lw=0.8, alpha=0.4)
 ax.set_xlabel("False-alarm rate on benign high-density rows")
 ax.set_ylabel("Hallucination recall on natural attacks")
-ax.set_title("(a) Veto rescue on natural adversarials\n(33 hallucinations with density ≥ 0.7)")
+ax.set_title("(a) Veto rescue on reference-grounded rows\n(30 hallucinations with density ≥ 0.7)")
 ax.set_xlim(-0.02, 0.5)
 ax.set_ylim(-0.02, 1.0)
 
@@ -39,8 +42,8 @@ labels = [
     "Benign\n(true claim, aligned)",
     "Citation laundering\n(off-topic high-trust)",
     "Keyword stuffing\n(generic blogs)",
-    "Empty-keyword\n(no proper nouns)",
-    "Domain spoofing\n('.gov' substring)",
+    "Empty-keyword\n(regression)",
+    "Domain spoofing\n(regression)",
     "SEO inflation\n(perfect attack)",
 ]
 vals = attacks["D_density"].tolist()
@@ -52,7 +55,7 @@ ax.set_ylabel("D(T) density component")
 ax.axhline(vals[0], color="#2ca02c", lw=0.8, ls=":", alpha=0.6)
 ax.text(5.4, vals[0] + 0.02, f"benign = {vals[0]:.2f}", fontsize=7,
         ha="right", color="#2ca02c")
-ax.set_title("(b) Synthetic attack inflation\n(fabricated claim, D=0 honest)")
+ax.set_title("(b) Synthetic security regression\n(residual score on fabricated claim)")
 ax.set_ylim(0, 0.75)
 
 for bar, v in zip(bars, vals):
@@ -60,6 +63,6 @@ for bar, v in zip(bars, vals):
             ha="center", va="bottom", fontsize=7)
 
 plt.tight_layout()
-fig.savefig(ROOT / "adversarial_robustness_figure.png", dpi=300, bbox_inches="tight")
-fig.savefig(ROOT / "adversarial_robustness_figure.pdf", bbox_inches="tight")
-print(f"Saved {ROOT/'adversarial_robustness_figure.png'}")
+fig.savefig(FIGURES / "adversarial_robustness_figure.png", dpi=300, bbox_inches="tight")
+fig.savefig(FIGURES / "adversarial_robustness_figure.pdf", bbox_inches="tight")
+print(f"Saved {FIGURES/'adversarial_robustness_figure.png'}")

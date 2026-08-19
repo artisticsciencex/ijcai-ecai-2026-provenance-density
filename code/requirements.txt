@@ -1,17 +1,17 @@
-# Pinned to versions used in our published runs.
-# Tested with Python 3.10–3.12.
-openai>=1.40
-pandas>=2.0
-numpy>=1.24
-scikit-learn>=1.3
-matplotlib>=3.7
-seaborn>=0.13
-torch>=2.0
-transformers>=4.40
-datasets>=2.18
-sentencepiece>=0.1.99
-accelerate>=0.30
-requests>=2.31
-tqdm>=4.66
-statsmodels>=0.14
-scipy>=1.10
+# Direct dependencies are pinned for repeatable installation and Dependabot
+# review. Model and dataset content revisions are pinned separately in config.py.
+# Python 3.10-3.12.
+openai==2.48.0
+pandas==2.3.3
+numpy==2.0.2
+scikit-learn==1.6.1
+matplotlib==3.9.4
+seaborn==0.13.2
+torch==2.8.0
+transformers==4.57.6
+datasets==4.5.0
+sentencepiece==0.2.2
+accelerate==1.10.1
+requests==2.32.5
+tqdm==4.70.0
+scipy==1.13.1

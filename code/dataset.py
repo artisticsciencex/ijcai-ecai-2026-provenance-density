@@ -1,6 +1,7 @@
 """Composite N=200 audit dataset: TruthfulQA (static) + FreshQA (dynamic).
 
-Behaviour is byte-identical to cell 22 of the original notebook.
+The sampling design matches the original audit and now pins the upstream
+dataset revision and random seed explicitly.
 
 The TruthfulQA half is sampled at random from the HuggingFace `truthful_qa`
 dataset (`generation` config, `validation` split). The FreshQA half is a
@@ -12,10 +13,15 @@ import random
 
 from datasets import load_dataset
 
-from config import SAMPLE_SIZE_TRUTHFULQA, SAMPLE_SIZE_FRESH
+from config import (
+    SAMPLE_SIZE_TRUTHFULQA,
+    SAMPLE_SIZE_FRESH,
+    TRUTHFULQA_DATASET_REVISION,
+)
 
-# The 50 FreshQA-style probes used in the published audit. Verbatim from
-# cell 22 of the original notebook, retained for exact reproducibility.
+# The 50 author-created, FreshQA-style probes used in the published audit.
+# They are verbatim from cell 22 of the original notebook and are not copied
+# from or represented as an official FreshQA dataset release.
 FRESH_SAMPLES: list[str] = [
     "Who won the 2024 US Presidential Election?",
     "Who won the 2024 Super Bowl?",
@@ -73,7 +79,7 @@ FRESH_SAMPLES: list[str] = [
 def load_mixed_dataset(
     n_truthfulqa: int = SAMPLE_SIZE_TRUTHFULQA,
     n_fresh: int = SAMPLE_SIZE_FRESH,
-    seed: int | None = None,
+    seed: int | None = 0,
 ) -> list[dict]:
     """Return a shuffled list of `{type, question}` dicts.
 
@@ -86,23 +92,40 @@ def load_mixed_dataset(
     Each item has a `type` field of either "Static_TruthfulQA" or
     "Dynamic_FreshQA" so the audit log can be split on it later.
     """
+    if n_truthfulqa < 0 or n_fresh < 0:
+        raise ValueError("Dataset sizes must be non-negative.")
+    if n_fresh > len(FRESH_SAMPLES):
+        raise ValueError(
+            f"n_fresh={n_fresh} exceeds the {len(FRESH_SAMPLES)} unique bundled probes."
+        )
+
     rng = random.Random(seed)
     data: list[dict] = []
 
     print("Loading TruthfulQA (generation/validation)…")
     try:
-        tqa = load_dataset("truthful_qa", "generation", split="validation")
-        indices = rng.sample(range(len(tqa)), min(len(tqa), n_truthfulqa))
-        for i in indices:
-            data.append({"type": "Static_TruthfulQA", "question": tqa[i]["question"]})
-    except Exception as e:
-        print(f"  ⚠ TruthfulQA load failed: {e}")
+        tqa = load_dataset(
+            "truthfulqa/truthful_qa",
+            "generation",
+            split="validation",
+            revision=TRUTHFULQA_DATASET_REVISION,
+        )
+    except Exception:
+        raise RuntimeError(
+            "TruthfulQA could not be loaded at the pinned revision; refusing "
+            "to continue with a silently incomplete dataset."
+        ) from None
+    if n_truthfulqa > len(tqa):
+        raise ValueError(f"n_truthfulqa={n_truthfulqa} exceeds dataset size {len(tqa)}.")
+    indices = rng.sample(range(len(tqa)), n_truthfulqa)
+    for i in indices:
+        data.append({"type": "Static_TruthfulQA", "question": tqa[i]["question"]})
 
     print(f"Injecting {n_fresh} FreshQA-style probes…")
-    for i in range(n_fresh):
+    for question in FRESH_SAMPLES[:n_fresh]:
         data.append({
             "type": "Dynamic_FreshQA",
-            "question": FRESH_SAMPLES[i % len(FRESH_SAMPLES)],
+            "question": question,
         })
 
     rng.shuffle(data)

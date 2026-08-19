@@ -1,38 +1,36 @@
 Creative Commons Attribution 4.0 International (CC BY 4.0)
 
-This license applies to all files in the following locations of this
-repository:
-  - data/
-  - results/
-  - interface/
-  - README.md
-  - and any other non-code documentation in this repository.
+This license applies to project-authored files in:
+  - data/, except data/user_study_data.csv and
+    data/truthfulqa_references.csv;
+  - results/;
+  - interface/;
+  - README.md and other project-authored non-code documentation.
 
-Code under code/ is separately licensed under MIT (see LICENSE-CODE.txt).
-TruthfulQA references in data/truthfulqa_references.csv are reproduced from
-the upstream TruthfulQA dataset (https://huggingface.co/datasets/truthfulqa/truthful_qa)
-which is itself released under Apache-2.0; we redistribute under that license.
+Code under code/, tests/, and scripts/ is separately licensed under MIT; see
+LICENSE-CODE.txt.
 
-You are free to:
-  - Share — copy and redistribute the material in any medium or format.
-  - Adapt — remix, transform, and build upon the material for any purpose,
-    even commercially.
+The participant-level research data in data/user_study_data.csv is expressly
+excluded from CC BY 4.0 and is governed by HUMAN-DATA-USE-NOTICE.txt.
 
-Under the following terms:
-  - Attribution — You must give appropriate credit, provide a link to the
-    license, and indicate if changes were made. You may do so in any
-    reasonable manner, but not in any way that suggests the licensor
-    endorses you or your use.
+TruthfulQA question and reference-answer material in
+data/truthfulqa_references.csv and in rows marked Static_TruthfulQA in
+data/audit_full_validation.csv and data/tqa_judge_labels.csv is expressly
+excluded from CC BY 4.0. It remains under Apache License 2.0. Project-generated
+answer, score, latency, and judge-output fields in the two mixed CSV files are
+CC BY 4.0; see
+LICENSE-TRUTHFULQA-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
-Suggested attribution string:
+You are free to share and adapt the CC BY 4.0 material for any purpose,
+including commercially, provided that you give appropriate credit, link to
+the license, and indicate whether changes were made.
+
+Suggested attribution:
 
   Zhang Q., Huang Y., Lee J., Starner T., Rekimoto J. (2026).
   Provenance Density Open-Science Release.
   Licensed under CC BY 4.0.
-  https://github.com/<USER>/ijcai-ecai-2026-provenance-density
+  https://github.com/artisticsciencex/ijcai-ecai-2026-provenance-density
 
-No additional restrictions — you may not apply legal terms or technological
-measures that legally restrict others from doing anything the license
-permits.
-
+No additional restrictions may be imposed on material governed by CC BY 4.0.
 Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode

@@ -35,9 +35,20 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score, average_precision_score
 import matplotlib.pyplot as plt
 
-ROOT = Path("/sessions/sleepy-zealous-goldberg/mnt/ijcai god")
-df = pd.read_csv(ROOT / "tqa_judge_labels.csv")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "data"
+RESULTS = REPO_ROOT / "results"
+FIGURES = RESULTS / "figures"
+RESULTS.mkdir(parents=True, exist_ok=True)
+FIGURES.mkdir(parents=True, exist_ok=True)
+df = pd.read_csv(DATA / "tqa_judge_labels.csv")
 print(f"Loaded {len(df)} judge-labeled rows.\n")
+if "label_status" not in df.columns:
+    df["label_status"] = np.where(
+        df["judge_has_refs"].astype(bool),
+        "reference_grounded",
+        "exploratory_closed_book",
+    )
 
 BETA_ORIG = 5.0  # paper's value (audit_pipeline.py uses tanh(total/5.0))
 
@@ -59,9 +70,9 @@ def score_table(y, scores):
 
 
 SPLITS = {
-    "All":        df,
-    "TruthfulQA": df[df["type"] == "Static_TruthfulQA"].copy(),
-    "FreshQA":    df[df["type"] == "Dynamic_FreshQA"].copy(),
+    "TruthfulQA_confirmatory": df[df["label_status"] == "reference_grounded"].copy(),
+    "All_exploratory": df,
+    "Dynamic_exploratory": df[df["label_status"] == "exploratory_closed_book"].copy(),
 }
 
 # --------------------------------------------------------------------------- #
@@ -87,6 +98,7 @@ for name, sub in SPLITS.items():
         auc_pint, _ = score_table(y, det_pint)
         beta_rows.append({
             "split": name, "beta": beta,
+            "evidence_status": "confirmatory" if name.endswith("confirmatory") else "exploratory",
             "AUC_D(T)": round(auc_dt, 3),
             "AUC_density": round(auc_dens, 3),
             "AUC_pint": round(auc_pint, 3),  # constant across β by definition
@@ -95,7 +107,7 @@ for name, sub in SPLITS.items():
 beta_df = pd.DataFrame(beta_rows)
 print("=== β saturation sweep ===")
 print(beta_df.pivot(index="beta", columns="split", values="AUC_D(T)").round(3))
-beta_df.to_csv(ROOT / "sensitivity_beta_sweep.csv", index=False)
+beta_df.to_csv(RESULTS / "sensitivity_beta_sweep.csv", index=False)
 
 # --------------------------------------------------------------------------- #
 # 2. Aggregation form ablation (β fixed at paper value 5.0)
@@ -150,6 +162,7 @@ for name, sub in SPLITS.items():
         auc, ap = score_table(y, det)
         agg_rows.append({
             "split": name, "form": agg_name,
+            "evidence_status": "confirmatory" if name.endswith("confirmatory") else "exploratory",
             "AUC": round(auc, 3),
             "AP":  round(ap, 3),
         })
@@ -157,7 +170,7 @@ for name, sub in SPLITS.items():
 agg_df = pd.DataFrame(agg_rows)
 print("\n=== Aggregation form ablation ===")
 print(agg_df.pivot(index="form", columns="split", values="AUC").round(3).to_string())
-agg_df.to_csv(ROOT / "sensitivity_aggregation_form.csv", index=False)
+agg_df.to_csv(RESULTS / "sensitivity_aggregation_form.csv", index=False)
 
 # --------------------------------------------------------------------------- #
 # 3. Static-vs-Dynamic ecological separation as a function of β
@@ -180,7 +193,7 @@ for beta in betas:
 eco_df = pd.DataFrame(eco_rows)
 print("\n=== Ecological Static-vs-Dynamic separation by β ===")
 print(eco_df.round(3).to_string(index=False))
-eco_df.to_csv(ROOT / "sensitivity_beta_ecological.csv", index=False)
+eco_df.to_csv(RESULTS / "sensitivity_beta_ecological.csv", index=False)
 
 # --------------------------------------------------------------------------- #
 # 4. Plot β-vs-AUC + β-vs-ecological-gap, two-panel layout
@@ -193,9 +206,11 @@ fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.9))
 
 # Panel A: AUC vs β (with all three splits + Veto baselines)
 ax = axes[0]
-SPLIT_ORDER = [("All", "All N=200", "#1f77b4", "o-"),
-               ("TruthfulQA", "TruthfulQA N=150", "#2ca02c", "s-"),
-               ("FreshQA", "FreshQA N=50", "#9467bd", "D-")]
+SPLIT_ORDER = [
+    ("TruthfulQA_confirmatory", "TruthfulQA N=150 (confirmatory)", "#2ca02c", "s-"),
+    ("All_exploratory", "All N=200 (exploratory)", "#1f77b4", "o-"),
+    ("Dynamic_exploratory", "Dynamic N=50 (exploratory)", "#9467bd", "D-"),
+]
 for skey, stitle, color, marker in SPLIT_ORDER:
     sub = beta_df[beta_df["split"] == skey].sort_values("beta")
     ax.plot(sub["beta"], sub["AUC_D(T)"], marker, lw=1.4, ms=4.5,
@@ -232,15 +247,15 @@ ax.legend(loc="lower right", frameon=False, fontsize=7)
 ax.set_ylim(0, 1.0)
 
 plt.tight_layout()
-fig.savefig(ROOT / "sensitivity_beta_curve.png", dpi=300, bbox_inches="tight")
-fig.savefig(ROOT / "sensitivity_beta_curve.pdf", bbox_inches="tight")
-print(f"\nSaved β sweep figure to {ROOT/'sensitivity_beta_curve.png'}")
+fig.savefig(FIGURES / "sensitivity_beta_curve.png", dpi=300, bbox_inches="tight")
+fig.savefig(FIGURES / "sensitivity_beta_curve.pdf", bbox_inches="tight")
+print(f"\nSaved β sweep figure to {FIGURES/'sensitivity_beta_curve.png'}")
 
 # --------------------------------------------------------------------------- #
 # Summary
 # --------------------------------------------------------------------------- #
 print("\n=== HEADLINE NUMBERS ===")
-for skey in ["All", "TruthfulQA", "FreshQA"]:
+for skey in ["TruthfulQA_confirmatory", "All_exploratory", "Dynamic_exploratory"]:
     sub = beta_df[beta_df["split"] == skey]
     if len(sub) == 0: continue
     print(f"\n{skey}:")
@@ -248,7 +263,7 @@ for skey in ["All", "TruthfulQA", "FreshQA"]:
     print(f"  AUC P_int (constant): {sub['AUC_pint'].iloc[0]:.3f}")
 
 print("\nBest aggregation form per split (by AUC):")
-for skey in ["All", "TruthfulQA", "FreshQA"]:
+for skey in ["TruthfulQA_confirmatory", "All_exploratory", "Dynamic_exploratory"]:
     sub = agg_df[agg_df["split"] == skey].sort_values("AUC", ascending=False)
     if len(sub) == 0: continue
     print(f"\n  {skey}:")

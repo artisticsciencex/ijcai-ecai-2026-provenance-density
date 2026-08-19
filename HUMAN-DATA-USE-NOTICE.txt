@@ -1,0 +1,29 @@
+HUMAN-PARTICIPANT RESEARCH DATA USE TERMS
+
+Copyright (c) 2026 Qing Zhang, Yifei Huang, Juyoung Lee, Thad Starner,
+Jun Rekimoto. All rights reserved except for the permissions below.
+
+These terms apply only to data/user_study_data.csv.
+
+Permission is granted to use and reproduce the file for non-commercial
+scholarly research, peer review, teaching, and verification of the associated
+paper, subject to all of the following conditions:
+
+1. Cite the associated paper and this repository.
+2. Do not attempt to identify, single out for contact, or link any participant
+   record to external information.
+3. Do not combine the file with other data for the purpose of inferring a
+   participant's identity or sensitive characteristics.
+4. Do not use the file for commercial product development, advertising,
+   employment or credit decisions, surveillance, or training a commercial
+   model.
+5. Redistribute the file only unchanged, together with this notice and
+   data/PRIVACY.md.
+6. Comply with applicable privacy, research-ethics, and data-protection law.
+
+No permission is granted for uses outside these terms. To request additional
+permission, contact the corresponding author through the address in README.md.
+
+THE DATA IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. These terms do
+not waive participant rights or override applicable law or institutional
+ethics requirements.

@@ -18,13 +18,15 @@ import os
 # ---------------------------------------------------------------------------
 # Models
 # ---------------------------------------------------------------------------
-GENERATOR_MODEL = "gpt-4o-mini"          # The audited LLM (run_audit.py)
-SEGMENTER_MODEL = "gpt-4o-mini"          # Same checkpoint, τ=0 (provenance_density.py)
-JUDGE_MODEL     = "gpt-4o"               # GPT-4o-mini's stronger sibling, judge for ROC labelling
+GENERATOR_MODEL = "gpt-4o-mini-2024-07-18"  # Pinned snapshot (run_audit.py)
+SEGMENTER_MODEL = "gpt-4o-mini-2024-07-18"  # Same pinned snapshot, τ=0
+JUDGE_MODEL     = "gpt-4o-2024-11-20"       # Pinned judge snapshot
                                          # (llm_judge_labeling.py)
 NLI_MODEL_NAME  = (
     "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli"
 )                                        # Used by semantic_entropy.py
+NLI_MODEL_REVISION = "b3546ea6b0346eb6f8d5d68b13c7dc6d0376b3d7"
+TRUTHFULQA_DATASET_REVISION = "741b8276f2d1982aa3d5b832d3ee81ed3b896490"
 
 # ---------------------------------------------------------------------------
 # Hyperparameters of D(T)  — must match Table 1 in the paper exactly
@@ -36,7 +38,7 @@ TOP_K_SEARCH = 3                         # Top-k organic results per claim (prov
 # Three-tier reputation prior. CUBIC matchratio penalty is applied separately.
 HIGH_TRUST_DOMAINS = [
     ".gov", ".edu", "wikipedia.org", "nih.gov",
-    "reuters", "apnews", "nature.com",
+    "reuters.com", "apnews.com", "nature.com",
 ]
 LOW_TRUST_DOMAINS = [
     "reddit.com", "quora.com", "medium.com", "twitter.com",

@@ -4,7 +4,8 @@ This module is the single place where Section 3.1's "Cubic Contextual Weight"
 lives. A reader can read this 60-line file end-to-end and verify it against
 Section 3.1 of the paper without touching anything else.
 
-Behaviour is byte-identical to cell 22 of the original audit notebook.
+The formula is preserved from the paper implementation; URL and token parsing
+include release-hardening checks documented by the regression tests.
 
 Functions
 ---------
@@ -13,7 +14,7 @@ score_url(url, snippet, keywords) → float in [0, 1]
 """
 from __future__ import annotations
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
 from config import (
     HIGH_TRUST_DOMAINS, LOW_TRUST_DOMAINS,
@@ -44,11 +45,29 @@ def extract_rare_keywords(text: str) -> set[str]:
             if w not in _LEADING_CAP_STOPWORDS}
 
 
+def _normalise_hostname(url: str) -> str:
+    """Return a canonical ASCII hostname or an empty string for invalid URLs."""
+    try:
+        parsed = urlsplit(url or "")
+        hostname = (parsed.hostname or "").rstrip(".").lower()
+        return hostname.encode("idna").decode("ascii")
+    except (TypeError, ValueError, UnicodeError):
+        return ""
+
+
+def _domain_matches(hostname: str, marker: str) -> bool:
+    """Match an exact domain/subdomain or a true terminal suffix such as .gov."""
+    marker = marker.lower().rstrip(".")
+    if marker.startswith("."):
+        return hostname.endswith(marker) and hostname != marker[1:]
+    return hostname == marker or hostname.endswith("." + marker)
+
+
 def _reputation_for(domain: str) -> float:
     """Three-tier reputation prior — Table 1 of the paper."""
-    if any(x in domain for x in HIGH_TRUST_DOMAINS):
+    if any(_domain_matches(domain, x) for x in HIGH_TRUST_DOMAINS):
         return HIGH_TRUST_REPUTATION
-    if any(x in domain for x in LOW_TRUST_DOMAINS):
+    if any(_domain_matches(domain, x) for x in LOW_TRUST_DOMAINS):
         return LOW_TRUST_REPUTATION
     return DEFAULT_REPUTATION
 
@@ -66,17 +85,19 @@ def score_url(url: str, snippet: str, keywords: set[str]) -> float:
     -------
     A non-negative float in [0, 1].
     """
-    domain = urlparse(url or "").netloc.lower()
+    domain = _normalise_hostname(url)
     reputation = _reputation_for(domain)
 
     if not keywords:
-        # Empty-keyword fallback. NB: Section 4.4 (Adversarial Robustness)
-        # discusses this as a known vulnerability and recommends a
-        # conservative default ≤ 0.3 in future iterations.
-        relevance = 1.0
+        # No keywords means the snippet cannot demonstrate contextual overlap.
+        # Fail closed instead of awarding maximum relevance.
+        relevance = 0.0
     else:
-        snip = (snippet or "").lower()
-        matches = sum(1 for k in keywords if k.lower() in snip)
+        # Match whole lexical tokens so an attacker cannot satisfy "Curie"
+        # with a string such as "CurieSpam".
+        snippet_tokens = set(re.findall(r"[A-Za-z0-9-]+", snippet or ""))
+        snippet_tokens = {token.lower() for token in snippet_tokens}
+        matches = sum(1 for k in keywords if k.lower() in snippet_tokens)
         match_ratio = matches / len(keywords)
         relevance = match_ratio ** MATCHRATIO_EXPONENT  # Cubic Penalty
 
@@ -100,11 +121,13 @@ if __name__ == "__main__":
 
     # 2. Empty-keyword fallback
     score_empty = score_url(high_trust_url, snippet, set())
-    assert score_empty == 1.0
-    print(f"  ✓ Empty-keyword fallback yields reputation × 1.0 = {score_empty}")
+    assert score_empty == 0.0
+    print(f"  ✓ Empty-keyword fallback fails closed = {score_empty}")
 
     # 3. Reputation tiers
     assert _reputation_for("www.reuters.com") == 1.0
     assert _reputation_for("medium.com") == 0.1
     assert _reputation_for("example.org") == 0.5
+    assert _reputation_for("my.gov.spoof.example.net") == 0.5
+    assert _reputation_for("nature.com.evil.example") == 0.5
     print("  ✓ Reputation tiers (high/low/default) match Table 1.")
