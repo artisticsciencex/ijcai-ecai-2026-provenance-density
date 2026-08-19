@@ -12,6 +12,6 @@ transformers==4.57.6
 datasets==4.5.0
 sentencepiece==0.2.2
 accelerate==1.10.1
-requests==2.32.5
+requests==2.34.2
 tqdm==4.70.0
 scipy==1.13.1
